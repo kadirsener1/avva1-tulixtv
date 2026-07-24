@@ -1,0 +1,33 @@
+name: Domain Güncelleme
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+jobs:
+  scrape-and-update:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Repository'yi checkout et
+      uses: actions/checkout@v4
+
+    - name: Python kurulumu
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+
+    - name: Gerekli kütüphaneleri yükle
+      run: pip install requests beautifulsoup4
+
+    - name: Domain bilgisini çek ve kaydet
+      run: python fetch_domain.py
+
+    - name: Değişiklikleri commit et
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add selcuk_sports_guncel_domain.txt
+        git diff --staged --quiet || git commit -m "Domainler güncellendi: $(date +'%d.%m.%Y %H:%M')"
+        git push
