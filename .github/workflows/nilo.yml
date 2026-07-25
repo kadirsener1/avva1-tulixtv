@@ -1,33 +1,47 @@
-name: Giniko M3U Güncelle
+name: Update channels5.json
 
 on:
+  workflow_dispatch:
+
   schedule:
-    - cron: "0 */6 * * *"   # Her 6 saatte bir
-  workflow_dispatch:         # Elle de çalıştırılabilir
+    - cron: "0 */6 * * *"   # Her 6 saatte bir çalışır
+
+permissions:
+  contents: write
 
 jobs:
-  scrape:
+  update:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Repo'yu çek
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Python kur
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
-      - name: Bağımlılıkları yükle
-        run: pip install requests
-
-      - name: Scripti çalıştır
-        run: python nilo.py
-
-      - name: Dosyaları commit et ve push'la
+      - name: Install dependencies
         run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add channels5.m3u channels5.json
-          git diff --cached --quiet || git commit -m "🔄 M3U güncellendi: $(date -u '+%Y-%m-%d %H:%M') UTC"
+          python -m pip install --upgrade pip
+          pip install requests
+
+      - name: Run script
+        run: |
+          python channels5.py
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add channels5.json
+
+          if git diff --cached --quiet; then
+            echo "No changes."
+            exit 0
+          fi
+
+          git commit -m "Update channels5.json"
           git push
