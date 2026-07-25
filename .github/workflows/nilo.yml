@@ -1,47 +1,46 @@
-name: Update channels5.json
+name: Giniko Kanal Tarama
 
 on:
+  schedule:
+    - cron: '0 3 * * *'
   workflow_dispatch:
 
-  schedule:
-    - cron: "0 */6 * * *"   # Her 6 saatte bir çalışır
-
-permissions:
-  contents: write
-
 jobs:
-  update:
+  scan:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Python Setup
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: '3.11'
 
-      - name: Install dependencies
+      - name: Bagımlılık Kur
         run: |
           python -m pip install --upgrade pip
           pip install requests
 
-      - name: Run script
+      - name: Kanalları Tara
+        run: python nilo.py
+
+      - name: Kanal sayısını kontrol et
         run: |
-          python channels5.json
-
-      - name: Commit changes
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          git add channels5.json
-
-          if git diff --cached --quiet; then
-            echo "No changes."
-            exit 0
+          COUNT=$(python3 -c "import json; d=json.load(open('channels5.json')); print(len(d))")
+          echo "Bulunan kanal: $COUNT"
+          # Eğer kanal sayısı 1'den azsa hata ver (Boş dosya koruması)
+          if (( COUNT < 1 )); then
+            echo "Kanal sayısı çok az ($COUNT), hata oluşmuş olabilir!"
+            exit 1
           fi
 
-          git commit -m "Update channels5.json"
-          git push
+      - name: Commit ve Push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add channels5.json
+          git diff --staged --quiet && echo "Degisiklik yok" || (git commit -m "Kanal tarama: $(date +'%Y-%m-%d')" && git push)
