@@ -52,10 +52,9 @@ jobs:
           
           git add channels5.json
           
-          # Değişiklik olup olmadığını kontrol et ve commit at
           if git diff --cached --quiet; then
             echo "Değişiklik yok, commit atlanıyor."
           else
             git commit -m "Kanal tarama: $(date +'%Y-%m-%d')"
-            git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:${{ github.ref_name }}
+            git push origin HEAD
           fi
