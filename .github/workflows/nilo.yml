@@ -30,17 +30,32 @@ jobs:
 
       - name: Kanal sayısını kontrol et
         run: |
-          COUNT=$(python3 -c "import json; d=json.load(open('channels5.json')); print(len(d))")
-          echo "Bulunan kanal: $COUNT"
-          # Eğer kanal sayısı 1'den azsa hata ver (Boş dosya koruması)
-          if (( COUNT < 1 )); then
-            echo "Kanal sayısı çok az ($COUNT), hata oluşmuş olabilir!"
-            exit 1
-          fi
+          python3 -c "
+          import json
+          try:
+              with open('channels5.json', 'r', encoding='utf-8') as f:
+                  d = json.load(f)
+              count = len(d) if isinstance(d, list) else len(d.get('channels', []))
+              print(f'Bulunan kanal: {count}')
+              if count < 1:
+                  print('Kanal sayısı çok az, hata!')
+                  exit(1)
+          except Exception as e:
+              print(f'JSON okuma hatası: {e}')
+              exit(1)
+          "
 
       - name: Commit ve Push
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
           git add channels5.json
-          git diff --staged --quiet && echo "Degisiklik yok" || (git commit -m "Kanal tarama: $(date +'%Y-%m-%d')" && git push)
+          
+          # Değişiklik olup olmadığını kontrol et ve commit at
+          if git diff --cached --quiet; then
+            echo "Değişiklik yok, commit atlanıyor."
+          else
+            git commit -m "Kanal tarama: $(date +'%Y-%m-%d')"
+            git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:${{ github.ref_name }}
+          fi
