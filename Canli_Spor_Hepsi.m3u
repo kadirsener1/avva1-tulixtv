@@ -1,5 +1,5 @@
 ﻿#EXTM3U
-# Son Guncelleme: 29.07.2026 10:44:46
+# Son Guncelleme: 29.07.2026 10:47:44
 #EXTINF:-1 group-title="ATOM SPOR (VIP)" tvg-logo="https://hizliresim.com/gm50rk9b",ATOM - Bein Sports 1
 #EXTVLCOPT:http-referrer=https://atomsportv501.top
 #EXTVLCOPT:http-origin=https://atomsportv501.top
@@ -84,7 +84,7 @@ https://andro.evrenesoglu59.lat/checklist/androstreamlivess1.m3u8
 #EXTVLCOPT:http-referrer=https://taraftariumizle.org/
 #EXTVLCOPT:http-origin=https://taraftariumizle.org/
 #EXTVLCOPT:http-user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36
-https://andro.evrenesoglu59.lat/checklist/androstreamlivessplus1.m3u8
+https://andro.evrenesoglu59.lat/checklist/androstreamlivess1.m3u8
 #EXTINF:-1 group-title="NETSPOR CANLI MAÇLAR",NET - Real Betis - Lyon21:00|Hazirlik
 #EXTVLCOPT:http-referrer=https://taraftariumizle.org/
 #EXTVLCOPT:http-origin=https://taraftariumizle.org/
@@ -515,11 +515,6 @@ https://andro.evrenesoglu59.lat/checklist/androstreamlivech39656697.m3u8
 #EXTVLCOPT:http-origin=https://taraftariumizle.org/
 #EXTVLCOPT:http-user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36
 https://andro.evrenesoglu59.lat/checklist/androstreamlivech39656735.m3u8
-#EXTINF:-1 group-title="NETSPOR CANLI MAÇLAR",NET - Alice Rame - Margaux RouvroyCANLI12:08|WTA 125K: Targu Mures. Clay
-#EXTVLCOPT:http-referrer=https://taraftariumizle.org/
-#EXTVLCOPT:http-origin=https://taraftariumizle.org/
-#EXTVLCOPT:http-user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36
-https://andro.evrenesoglu59.lat/checklist/androstreamlivech39656549.m3u8
 #EXTINF:-1 group-title="NETSPOR CANLI MAÇLAR",NET - Uladzimir Ignatik - Dragos Nicolae CazacuCANLI12:26|ITF: Men. Pitesti. Clay
 #EXTVLCOPT:http-referrer=https://taraftariumizle.org/
 #EXTVLCOPT:http-origin=https://taraftariumizle.org/
@@ -585,6 +580,11 @@ https://andro.evrenesoglu59.lat/checklist/androstreamlivech39657911.m3u8
 #EXTVLCOPT:http-origin=https://taraftariumizle.org/
 #EXTVLCOPT:http-user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36
 https://andro.evrenesoglu59.lat/checklist/androstreamlivech39657515.m3u8
+#EXTINF:-1 group-title="NETSPOR CANLI MAÇLAR",NET - Charles Barry/Anthony Genov - Jiri Barnat/Adam DudaCANLI13:24|ATP Challenger: Doubles. Liberec. Clay
+#EXTVLCOPT:http-referrer=https://taraftariumizle.org/
+#EXTVLCOPT:http-origin=https://taraftariumizle.org/
+#EXTVLCOPT:http-user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36
+https://andro.evrenesoglu59.lat/checklist/androstreamlivech39658089.m3u8
 #EXTINF:-1 group-title="NETSPOR CANLI MAÇLAR",NET - Pawel Juszczak - Aryan LakshmananCANLI13:27|ITF: Men. Koszalin. Clay
 #EXTVLCOPT:http-referrer=https://taraftariumizle.org/
 #EXTVLCOPT:http-origin=https://taraftariumizle.org/
