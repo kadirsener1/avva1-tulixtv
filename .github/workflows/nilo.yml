@@ -2,8 +2,9 @@ name: Giniko Kanal Tarama
 
 on:
   schedule:
-    - cron: '0 3 * * *'
-  workflow_dispatch:
+     schedule:
+    - cron: '0 * * * *'   # Her saat başı çalışır
+  workflow_dispatch:       # Manuel çalıştırma
 
 jobs:
   scan:
