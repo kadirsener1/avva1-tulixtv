@@ -1,0 +1,32 @@
+name: Update Family Playlist
+on:
+  schedule:
+    - cron: '0 10 * * *' # This runs every day at 10:00 AM UTC (5:00 AM Warren time)
+  workflow_dispatch: # This gives you a "Run Now" button to test it
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run Scraper
+        run: python iptv_scraper.py
+
+      - name: Commit and Push Changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add family_safe.m3u
+          git commit -m "Auto-update playlist" || echo "No changes to commit"
+          git pull --rebase origin main
+          git push origin main
