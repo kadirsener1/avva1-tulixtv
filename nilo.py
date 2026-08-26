@@ -104,16 +104,20 @@ def main():
 
     results.sort(key=lambda x: x["id"])
 
-    # 1. JSON Kaydetme
+    # 1. JSON Kaydetme (Orijinal haliyle)
     with open("channels5.json", "w", encoding="utf-8") as f:
         json.dump(results, f, ensure_ascii=False, indent=2)
     print("✓ channels5.json oluşturuldu.")
 
-    # 2. M3U Kaydetme
+    # 2. M3U Kaydetme ((EPG) temizlenmiş haliyle)
     with open("channels5.m3u", "w", encoding="utf-8") as m3u:
         m3u.write("#EXTM3U\n")
         for ch in results:
-            m3u.write(f'#EXTINF:-1 tvg-id="{ch["id"]}" tvg-logo="{ch["logo"]}",{ch["name"]}\n')
+            # (EPG) yazısını temizle ve fazladan boşlukları düzelt
+            clean_name = re.sub(r'\(epg\)', '', ch["name"], flags=re.IGNORECASE)
+            clean_name = re.sub(r'\s+', ' ', clean_name).strip()
+
+            m3u.write(f'#EXTINF:-1 tvg-id="{ch["id"]}" tvg-logo="{ch["logo"]}",{clean_name}\n')
             m3u.write(f'{ch["stream"]}\n')
     print("✓ channels5.m3u oluşturuldu.")
 
