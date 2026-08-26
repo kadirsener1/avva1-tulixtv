@@ -43,4 +43,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add channels5.json
+          git add channels5.m3u
           git diff --staged --quiet && echo "Degisiklik yok" || (git commit -m "Kanal tarama: $(date +'%Y-%m-%d')" && git push)
