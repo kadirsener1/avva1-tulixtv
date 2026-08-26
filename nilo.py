@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
 
-import requests
 import json
 import re
+from html import unescape
+from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-TOTAL = 2000
-WORKERS = 30
+import requests
 
-JSON_FILE = "channels5.json"
-M3U_FILE = "channels5.m3u"
+
+# Ayarlar
+TOTAL = 1000
+WORKERS = 30
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0",
@@ -19,80 +21,142 @@ HEADERS = {
 ALLOWED_DOMAIN = "trn03.tulix.tv"
 
 
+# Dosyaları Python dosyasının bulunduğu klasöre kaydet
+BASE_DIR = Path(__file__).resolve().parent
+
+JSON_FILE = BASE_DIR / "channels5.json"
+M3U_FILE = BASE_DIR / "channels5.m3u"
+
+
+def get_plist_value(text, key):
+    """
+    XML içindeki şu yapıyı okur:
+
+    <key>name</key>
+    <string>Kanal Adı</string>
+    """
+
+    pattern = (
+        rf"<key>\s*{re.escape(key)}\s*</key>"
+        rf"\s*<string>(.*?)</string>"
+    )
+
+    match = re.search(
+        pattern,
+        text,
+        flags=re.IGNORECASE | re.DOTALL
+    )
+
+    if match:
+        return unescape(match.group(1)).strip()
+
+    return None
+
+
 def check_channel(ch_id):
 
-    url = f"https://ginikoturkish.com/xml/secure/plist.php?ch={ch_id}"
+    url = (
+        f"https://ginikoturkish.com/xml/secure/plist.php"
+        f"?ch={ch_id}"
+    )
 
     try:
-        r = requests.get(url, headers=HEADERS, timeout=8)
+        response = requests.get(
+            url,
+            headers=HEADERS,
+            timeout=8
+        )
 
-        if r.status_code != 200 or "HlsStreamURL" not in r.text:
+        if response.status_code != 200:
             return None
 
-        text = r.text
+        text = response.text
+
+        if "HlsStreamURL" not in text:
+            return None
+
         stream_url = None
 
-        lines = [l.strip() for l in text.split("\n") if l.strip()]
+        # Önce mevcut satır yapısıyla kontrol et
+        lines = [
+            line.strip()
+            for line in text.splitlines()
+            if line.strip()
+        ]
+
         last_isvod = None
 
         for i, line in enumerate(lines):
 
             if line == "isVOD" and i + 1 < len(lines):
-                last_isvod = lines[i + 1]
+                last_isvod = lines[i + 1].lower()
 
             if line == "HlsStreamURL" and i + 1 < len(lines):
-                u = lines[i + 1]
+                possible_url = lines[i + 1]
 
-                if u.startswith("http") and last_isvod == "false":
-                    stream_url = u
+                if (
+                    possible_url.startswith("http")
+                    and last_isvod == "false"
+                ):
+                    stream_url = possible_url
                     break
 
+        # XML formatı için yedek kontrol
         if not stream_url:
-            m = re.search(
-                r"<key>isVOD</key>\s*<string>false</string>.*?"
-                r"<key>HlsStreamURL</key>\s*<string>(.*?)</string>",
-                text,
-                re.DOTALL
+
+            pattern = (
+                r"<key>\s*isVOD\s*</key>"
+                r"\s*<string>\s*false\s*</string>"
+                r".*?"
+                r"<key>\s*HlsStreamURL\s*</key>"
+                r"\s*<string>(.*?)</string>"
             )
 
-            if m:
-                stream_url = m.group(1)
+            match = re.search(
+                pattern,
+                text,
+                flags=re.IGNORECASE | re.DOTALL
+            )
+
+            if match:
+                stream_url = match.group(1).strip()
 
         if not stream_url:
             return None
+
+        stream_url = unescape(stream_url.strip())
 
         # Domain filtresi
         if ALLOWED_DOMAIN not in stream_url:
             return None
 
-        # Kanal adı
+        # Kanal adını al
         name = None
 
         for i, line in enumerate(lines):
+
             if (
                 line == "name"
                 and i + 1 < len(lines)
                 and not lines[i + 1].startswith("http")
             ):
-                name = lines[i + 1].replace(" - Live", "").strip()
+                name = lines[i + 1]
+                name = name.replace(" - Live", "").strip()
                 break
 
         if not name:
-            m = re.search(
-                r"<key>name</key>\s*<string>(.*?)</string>",
-                text
-            )
+            name = get_plist_value(text, "name")
 
-            name = (
-                m.group(1).replace(" - Live", "").strip()
-                if m
-                else f"Kanal {ch_id}"
-            )
+        if not name:
+            name = f"Kanal {ch_id}"
 
-        # Logo
+        name = unescape(name).replace(" - Live", "").strip()
+
+        # Logo adresini al
         logo = None
 
         for i, line in enumerate(lines):
+
             if (
                 line == "logoUrlHD"
                 and i + 1 < len(lines)
@@ -102,16 +166,15 @@ def check_channel(ch_id):
                 break
 
         if not logo:
-            m = re.search(
-                r"<key>logoUrlHD</key>\s*<string>(.*?)</string>",
-                text
+            logo = get_plist_value(text, "logoUrlHD")
+
+        if not logo:
+            logo = (
+                f"https://www.giniko.com/logos/190x110/"
+                f"{ch_id}.jpg"
             )
 
-            logo = (
-                m.group(1)
-                if m
-                else f"https://www.giniko.com/logos/190x110/{ch_id}.jpg"
-            )
+        logo = unescape(logo.strip())
 
         print(f"✓ {ch_id}: {name}")
 
@@ -129,9 +192,10 @@ def check_channel(ch_id):
 
 def clean_m3u_value(value):
     """
-    M3U içindeki attribute değerlerinde sorun çıkarabilecek
+    M3U attribute değerlerinde sorun çıkarabilecek
     tırnak ve satır sonlarını temizler.
     """
+
     if value is None:
         return ""
 
@@ -144,85 +208,139 @@ def clean_m3u_value(value):
     )
 
 
-def create_m3u(results):
+def create_m3u_from_json():
     """
-    channels5.json içinde bulunan kanallardan M3U dosyası oluşturur.
+    channels5.json dosyasını okuyarak channels5.m3u oluşturur.
     """
 
-    with open(M3U_FILE, "w", encoding="utf-8") as f:
-        f.write("#EXTM3U\n")
+    if not JSON_FILE.exists():
+        print(f"JSON dosyası bulunamadı: {JSON_FILE}")
+        return
 
-        for channel in results:
-            channel_id = clean_m3u_value(channel.get("id"))
-            name = clean_m3u_value(channel.get("name"))
-            logo = clean_m3u_value(channel.get("logo"))
-            stream = str(channel.get("stream", "")).strip()
+    try:
+        with JSON_FILE.open("r", encoding="utf-8") as file:
+            channels = json.load(file)
 
-            if not stream:
-                continue
+    except Exception as error:
+        print(f"JSON dosyası okunamadı: {error}")
+        return
 
-            if not name:
-                name = f"Kanal {channel_id}"
+    channel_count = 0
 
-            f.write(
-                f'#EXTINF:-1 '
-                f'tvg-id="{channel_id}" '
-                f'tvg-name="{name}" '
-                f'tvg-logo="{logo}" '
-                f'group-title="Giniko",'
-                f'{name}\n'
-            )
+    try:
+        with M3U_FILE.open(
+            "w",
+            encoding="utf-8",
+            newline="\n"
+        ) as file:
 
-            f.write(f"{stream}\n")
+            file.write("#EXTM3U\n")
+
+            for channel in channels:
+
+                channel_id = clean_m3u_value(
+                    channel.get("id")
+                )
+
+                name = clean_m3u_value(
+                    channel.get("name")
+                )
+
+                logo = clean_m3u_value(
+                    channel.get("logo")
+                )
+
+                stream = str(
+                    channel.get("stream", "")
+                ).strip()
+
+                if not stream:
+                    continue
+
+                if not name:
+                    name = f"Kanal {channel_id}"
+
+                # M3U kanal bilgisi
+                file.write(
+                    f'#EXTINF:-1 '
+                    f'tvg-id="{channel_id}" '
+                    f'tvg-name="{name}" '
+                    f'tvg-logo="{logo}" '
+                    f'group-title="Giniko",'
+                    f'{name}\n'
+                )
+
+                # Yayın adresi
+                file.write(stream + "\n")
+
+                channel_count += 1
+
+    except Exception as error:
+        print(f"M3U dosyası oluşturulamadı: {error}")
+        return
 
     print(f"M3U dosyası oluşturuldu: {M3U_FILE}")
+    print(f"M3U içindeki kanal sayısı: {channel_count}")
 
 
 def main():
 
     print(f"Tarama başlıyor: 1-{TOTAL}")
+    print(f"Çalışma klasörü: {BASE_DIR}")
 
     results = []
 
-    with ThreadPoolExecutor(max_workers=WORKERS) as executor:
+    with ThreadPoolExecutor(
+        max_workers=WORKERS
+    ) as executor:
 
         futures = {
-            executor.submit(check_channel, i): i
-            for i in range(1, TOTAL + 1)
+            executor.submit(check_channel, channel_id): channel_id
+            for channel_id in range(1, TOTAL + 1)
         }
 
-        done = 0
+        completed = 0
 
         for future in as_completed(futures):
 
-            done += 1
+            completed += 1
 
-            result = future.result()
+            try:
+                result = future.result()
 
-            if result:
-                results.append(result)
+                if result:
+                    results.append(result)
 
-            if done % 50 == 0:
+            except Exception:
+                pass
+
+            if completed % 50 == 0:
                 print(
-                    f"[{done}/{TOTAL}] "
+                    f"[{completed}/{TOTAL}] "
                     f"Bulunan: {len(results)} kanal"
                 )
 
-    results.sort(key=lambda x: x["id"])
+    # Kanal numarasına göre sırala
+    results.sort(key=lambda item: item["id"])
 
     # JSON dosyasını kaydet
-    with open(JSON_FILE, "w", encoding="utf-8") as f:
-        json.dump(
-            results,
-            f,
-            ensure_ascii=False,
-            indent=2
-        )
+    try:
+        with JSON_FILE.open("w", encoding="utf-8") as file:
+            json.dump(
+                results,
+                file,
+                ensure_ascii=False,
+                indent=2
+            )
 
-    print(f"JSON dosyası oluşturuldu: {JSON_FILE}")
+        print(f"JSON dosyası oluşturuldu: {JSON_FILE}")
 
-    # M3U dosyasını oluştur
-    create_m3u(results)
+    except Exception as error:
+        print(f"JSON dosyası oluşturulamadı: {error}")
+        return
+
+    # JSON içinden M3U oluştur
+    create_m3u_from_json()
 
     print(f"\nToplam {len(results)} kanal bulundu")
 
