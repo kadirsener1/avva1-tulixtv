@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import requests
-import json
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -76,8 +75,7 @@ def check_channel(ch_id):
             "id": ch_id,
             "name": name,
             "logo": logo,
-            "stream": stream_url,
-            "xmlUrl": url
+            "stream": stream_url
         }
 
     except:
@@ -102,22 +100,17 @@ def main():
             if done % 50 == 0:
                 print(f"[{done}/{TOTAL}] Bulunan: {len(results)} kanal")
 
+    # Kanalları ID numarasına göre sırala
     results.sort(key=lambda x: x["id"])
 
-    # 1. JSON Kaydetme
-    with open("channels5.json", "w", encoding="utf-8") as f:
-        json.dump(results, f, ensure_ascii=False, indent=2)
-    print("✓ channels5.json oluşturuldu.")
-
-    # 2. M3U Kaydetme
-    with open("channels5.m3u", "w", encoding="utf-8") as m3u:
+    # Sadece M3U dosyasını yaz
+    with open("channels.m3u", "w", encoding="utf-8") as m3u:
         m3u.write("#EXTM3U\n")
         for ch in results:
             m3u.write(f'#EXTINF:-1 tvg-id="{ch["id"]}" tvg-logo="{ch["logo"]}",{ch["name"]}\n')
             m3u.write(f'{ch["stream"]}\n')
-    print("✓ channels5.m3u oluşturuldu.")
 
-    print(f"\nToplam {len(results)} kanal bulundu ve dosyalara yazıldı.")
+    print(f"\nİşlem tamamlandı! Toplam {len(results)} kanal 'channels.m3u' dosyasına kaydedildi.")
 
 
 if __name__ == "__main__":
