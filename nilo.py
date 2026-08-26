@@ -5,7 +5,7 @@ import json
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-TOTAL = 1000
+TOTAL = 2000
 WORKERS = 30
 
 JSON_FILE = "channels5.json"
